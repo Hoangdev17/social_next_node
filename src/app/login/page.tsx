@@ -9,19 +9,27 @@ import { toast, ToastContainer } from 'react-toastify';
 import Link from 'next/link';
 import { setAccessToken } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
+import { useDispatch } from 'react-redux';
+import { loginSuccess } from '@/lib/slices/authSlice';
 
-interface User {
-  id: string;
-  email: string;
+interface Data {
   accessToken: string;
+  user:{
+    id: string;
+    username: string;
+    email: string;
+    bio: string;
+    avatar: string;
+  }
 }
 
 const LoginPage = () => {
-  const [user, setUser] = useState<User | null>(null); 
+  const [user, setUser] = useState<Data | null>(null); 
   const [email, setEmail] = useState(""); 
   const [password, setPassword] = useState(""); 
   const [loading, setLoading] = useState(false);
-  
+
+  const dispatch = useDispatch(); 
   const router = useRouter();
 
   const onFinish = async (e: React.FormEvent) => {
@@ -29,8 +37,10 @@ const LoginPage = () => {
     setLoading(true); 
 
     try {
+
+      console.log("Logging in with email: ", email, " and password: ", password);
       
-      const response = await axios.post<User>('http://localhost:5000/api/auth/login', {
+      const response = await axios.post<Data>('http://localhost:5000/api/auth/login', {
         email,
         password,
       });
@@ -38,8 +48,16 @@ const LoginPage = () => {
       setUser(response.data); 
       setLoading(false);
 
+      console.log("Login response: ", response.data.user);
+
+      dispatch(loginSuccess({
+        user: response.data.user,
+        token: response.data.accessToken,
+      }));      
+
       setAccessToken(response.data.accessToken);
       localStorage.setItem('accessToken', response.data.accessToken);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
 
       router.push('/');
 
