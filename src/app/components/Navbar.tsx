@@ -25,8 +25,6 @@ export default function Navbar() {
 
    const user = useSelector((state: RootState) => state.auth.user);
    const avatar = useSelector((state: RootState) => state.auth.user?.avatar);
-  // const accessToken = useSelector((state: RootState) => state.auth.token);
-  // const avatar = useSelector((state: RootState) => state.auth.avatar);
 
   useEffect(() => {
     const storedToken = localStorage.getItem('accessToken');
