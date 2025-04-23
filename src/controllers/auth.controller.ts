@@ -27,13 +27,21 @@ export const login = async (req: Request, res: Response) => {
 
         const accessToken = generateAccessToken(user._id);
         const refreshToken = generateRefreshToken(user._id);
+
         user.refreshToken = refreshToken;
         await user.save();
+
+        res.cookie("refreshToken", refreshToken, {
+          httpOnly: true,
+          secure: false,
+          sameSite: "strict",
+          path: "/api/refresh-token",
+          maxAge: 7 * 24 * 60 * 60 * 1000 
+        });
 
         res.status(200).json({
             message: "Login successful",
             accessToken,
-            refreshToken,
             user: {
                 id: user._id,
                 username: user.username,
@@ -91,6 +99,48 @@ export const register = async (req: Request, res: Response) => {
       });
     } catch (error) {
       console.error('Register Error:', error);
+      res.status(500).json({
+        message: "Internal server error",
+      });
+    }
+  };
+
+  export const refreshToken = async (req: Request, res: Response) => {
+    try {
+      const { refreshToken } = req.cookies.refreshToken;
+
+      if (!refreshToken) {
+        res.status(401).json({ message: "Refresh token is required" });
+        return;
+      }
+
+      const user = await UserSchemas.findOne({ refreshToken });
+
+      if (!user) {
+        res.status(403).json({ message: "Invalid refresh token" });
+        return;
+      }
+
+      const newAccessToken = generateAccessToken(user._id);
+      const newRefreshToken = generateRefreshToken(user._id);
+
+      user.refreshToken = newRefreshToken;
+      await user.save();
+
+      res.cookie("refreshToken", newRefreshToken, {
+        httpOnly: true,
+        secure: false,
+        sameSite: "strict",
+        path: "/api/refresh-token",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+
+      res.status(200).json({
+        message: "Token refreshed successfully",
+        accessToken: newAccessToken,
+      });
+    } catch (error) {
+      console.error('Refresh Token Error:', error);
       res.status(500).json({
         message: "Internal server error",
       });
