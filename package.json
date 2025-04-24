@@ -18,6 +18,7 @@
   "devDependencies": {
     "@eslint/js": "^9.25.1",
     "@types/bcryptjs": "^2.4.6",
+    "@types/cookie-parser": "^1.4.8",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^22.14.1",
     "eslint": "^9.25.1",
@@ -40,6 +41,8 @@
     "@types/multer": "^1.4.12",
     "bcryptjs": "^3.0.2",
     "cloudinary": "^2.6.0",
+    "cookie-parser": "^1.4.7",
+    "cookies-parser": "^1.2.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",

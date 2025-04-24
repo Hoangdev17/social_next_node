@@ -32,12 +32,12 @@ export const login = async (req: Request, res: Response) => {
         await user.save();
 
         res.cookie("refreshToken", refreshToken, {
-          httpOnly: true,
+          httpOnly: false,
           secure: false,
-          sameSite: "strict",
-          path: "/api/refresh-token",
-          maxAge: 7 * 24 * 60 * 60 * 1000 
-        });
+          sameSite: "lax",
+          path: "/",  
+          maxAge: 7 * 24 * 60 * 60 * 1000  
+      });
 
         res.status(200).json({
             message: "Login successful",
@@ -107,7 +107,7 @@ export const register = async (req: Request, res: Response) => {
 
   export const refreshToken = async (req: Request, res: Response) => {
     try {
-      const { refreshToken } = req.cookies.refreshToken;
+      const refreshToken = req.cookies.refreshToken;
 
       if (!refreshToken) {
         res.status(401).json({ message: "Refresh token is required" });
@@ -128,10 +128,10 @@ export const register = async (req: Request, res: Response) => {
       await user.save();
 
       res.cookie("refreshToken", newRefreshToken, {
-        httpOnly: true,
+        httpOnly: false,
         secure: false,
-        sameSite: "strict",
-        path: "/api/refresh-token",
+        sameSite: "lax",
+        path: "/",
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 

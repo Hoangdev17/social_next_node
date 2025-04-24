@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 
 // Định nghĩa các tùy chọn cho access token và refresh token
 const accessTokenOptions: SignOptions = {
-  expiresIn: '15m',  
+  expiresIn: '0.5m',  
 };
 
 const refreshTokenOptions: SignOptions = {

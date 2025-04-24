@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import mongoose from "mongoose";
+import { text } from "stream/consumers";
 import PostSchemas from "~/models/Post.schemas";
 import { uploadImageToCloudinary } from "~/utils/upload";
 
@@ -132,7 +133,7 @@ export const likePost = async (req: Request, res: Response) => {
             return;
         }
 
-        const post = await PostSchemas.findById(postId);
+        const post = await PostSchemas.findOne({_id: postId });
 
         if (!post) {
             res.status(404).json({ message: "Post not found" });
@@ -141,15 +142,15 @@ export const likePost = async (req: Request, res: Response) => {
 
         const userIdObjectId = new mongoose.Types.ObjectId(userId);
 
-        if (post.likes.includes(userIdObjectId)) {
-            res.status(400).json({ message: "Post already liked" });
-            return;
+        if (post.likes.some((id) => id.equals(userIdObjectId))) {
+            post.likes = post.likes.filter((id) => !id.equals(userIdObjectId));
+            await post.save();
+            res.status(200).json({ message: "Post unliked successfully", post });
+        } else {
+            post.likes.push(userIdObjectId);
+            await post.save();
+            res.status(200).json({ message: "Post liked successfully", post });
         }
-
-        post.likes.push(userIdObjectId);
-        await post.save();
-
-        res.status(200).json({ message: "Post liked successfully", post });
     } catch (error) {
         res.status(500).json({ message: "Error liking post" });
         console.error(error);
@@ -191,4 +192,141 @@ export const unlikePost = async (req: Request, res: Response) => {
       return;
     }
   };
+
+export const commentPost = async (req: Request, res: Response) => {
+    try {
+        const { postId } = req.params;
+        const { comment } = req.body;
+        const userId = req.userId;
+
+        if (!userId) {
+            res.status(401).json({ message: "Unauthorized" });
+            return;
+        }
+
+        if (!comment) {
+            res.status(400).json({ message: "Comment is required" });
+            return;
+        }
+
+        const post = await PostSchemas.findById(postId);
+
+        if (!post) {
+            res.status(404).json({ message: "Post not found" });
+            return;
+        }
+
+        const newComment = {
+            userId: new mongoose.Types.ObjectId(userId),
+            comment,
+            createdAt: new Date(),
+            _id: new mongoose.Types.ObjectId(),
+        };
+
+        post.comments.push(newComment);
+        await post.save();
+
+        res.status(200).json({ message: "Comment added successfully", post });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error adding comment" });
+    }
+};
   
+export const editComment = async (req: Request, res: Response) => {
+    try {
+        const { postId, commentId } = req.params;
+        const { comment } = req.body;
+        const userId = req.userId;
+
+        if (!userId) {
+            res.status(401).json({ message: "Unauthorized" });
+            return;
+        }
+
+        if (!comment) {
+            res.status(400).json({ message: "Comment is required" });
+            return;
+        }
+
+        const post = await PostSchemas.findById(postId);
+
+        if (!post) {
+            res.status(404).json({ message: "Post not found" });
+            return;
+        }
+
+        const existingComment = post.comments.find(
+            (c) => c._id.toString() === commentId
+        );
+
+        if (!existingComment) {
+            res.status(404).json({ message: "Comment not found" });
+            return;
+        }
+
+        if (existingComment.userId.toString() !== userId) {
+            res.status(403).json({ message: "Forbidden" });
+            return;
+        }
+
+        existingComment.comment = comment;
+        await post.save();
+
+        res.status(200).json({ message: "Comment updated successfully", post });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error updating comment" });
+    }
+};
+
+export const deleteComment = async (req: Request, res: Response) => {
+    try {
+        const { postId, commentId } = req.params;
+        const userId = req.userId;
+
+        if (!userId) {
+            res.status(401).json({ message: "Unauthorized" });
+            return;
+        }
+
+        const post = await PostSchemas.findById(postId);
+
+        if (!post) {
+            res.status(404).json({ message: "Post not found" });
+            return;
+        }
+
+        const commentIndex = post.comments.findIndex(
+            (c) => c._id.toString() === commentId
+        );
+
+        if (commentIndex === -1) {
+            res.status(404).json({ message: "Comment not found" });
+            return;
+        }
+
+        if (post.comments[commentIndex].userId.toString() !== userId) {
+            res.status(403).json({ message: "Forbidden" });
+            return;
+        }
+
+        post.comments.splice(commentIndex, 1);
+        await post.save();
+
+        res.status(200).json({ message: "Comment deleted successfully", post });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error deleting comment" });
+    }
+};
+
+export const getAllPosts = async (req: Request, res: Response) => {
+    try {
+        const posts = await PostSchemas.find().sort({ updatedAt: -1 }).populate("createdBy", "username avatar");
+        res.status(200).json({ message: "Posts retrieved successfully", posts });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error retrieving posts" });
+    }
+};
