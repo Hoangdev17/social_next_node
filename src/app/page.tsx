@@ -1,18 +1,22 @@
 'use client'
 
 import { useState } from 'react'
-
-const navigation = [
-  { name: 'Product', href: '#' },
-  { name: 'Features', href: '#' },
-  { name: 'Marketplace', href: '#' },
-  { name: 'Company', href: '#' },
-]
+import PostPages from './components/PostPages'
 
 export default function Home() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
-    <></>
+    <div style={{ display: 'flex', height: '100vh' }} className='mt-24'>
+      <div style={{ flex: 1, backgroundColor: '#ffffff', padding: '1rem' }}>
+      Left
+      </div>
+      <div style={{ flex: 2, backgroundColor: '#ffffff', padding: '1rem' }}>
+        <PostPages />
+      </div>
+      <div style={{ flex: 1, backgroundColor: '#ffffff', padding: '1rem' }}>
+      Right
+      </div>
+    </div>
+    
   )
 }

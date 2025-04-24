@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast, ToastContainer } from 'react-toastify';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { api } from '@/lib/auth';
 
 interface User {
   id: string;
@@ -32,7 +33,7 @@ const RegisterPage = () => {
 
     try {
       
-      const response = await axios.post<User>('http://localhost:5000/api/auth/register', {
+      const response = await api.post<User>('/auth/register', {
         email,
         password,
         username,

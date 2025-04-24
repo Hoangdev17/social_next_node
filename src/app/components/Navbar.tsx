@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Dialog, DialogPanel } from '@headlessui/react'
+import { Dialog } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import { useRouter } from 'next/navigation'
 import { useSelector, useDispatch } from 'react-redux';
@@ -23,13 +23,13 @@ export default function Navbar() {
 
   const dispatch = useDispatch();
 
-   const user = useSelector((state: RootState) => state.auth.user);
-   const avatar = useSelector((state: RootState) => state.auth.user?.avatar);
+  const user = useSelector((state: RootState) => state.auth.user);
+  const avatar = useSelector((state: RootState) => state.auth.user?.avatar);
 
   useEffect(() => {
     const storedToken = localStorage.getItem('accessToken');
     setToken(storedToken)
-  }, []) 
+  }, [])
 
   useEffect(() => {
     const accessToken = localStorage.getItem('accessToken');
@@ -43,8 +43,6 @@ export default function Navbar() {
     }
   }, [dispatch]);
 
-  
-
   const handleLogout = () => {
     dispatch(logout());
     localStorage.removeItem('accessToken')
@@ -54,7 +52,7 @@ export default function Navbar() {
   }
 
   return (
-    <header className="absolute inset-x-0 top-0 z-50 bg-white">
+    <header className="absolute fixed inset-x-0 top-0 z-50 bg-gray-400">
       <nav aria-label="Global" className="flex items-center justify-between p-6 lg:px-8">
         <div className="flex lg:flex-1">
           <a href="#" className="-m-1.5 p-1.5">
@@ -73,7 +71,7 @@ export default function Navbar() {
             onClick={() => setMobileMenuOpen(true)}
             className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700"
           >
-            <Bars3Icon aria-hidden="true" className="size-6" />
+            <Bars3Icon aria-hidden="true" className="h-6 w-6" />
           </button>
         </div>
 
@@ -88,19 +86,18 @@ export default function Navbar() {
         <div className="hidden lg:flex lg:flex-1 lg:justify-end">
           {user ? (
             <div className="flex items-center gap-3">
-            <img
-              src={avatar || 'https://via.placeholder.com/40'} 
-              alt="Avatar"
-              className="h-10 w-10 rounded-full border-2 border-indigo-500"
-            />
-            <button
-              onClick={handleLogout}
-              className="text-sm px-3 py-1.5 rounded-md bg-red-500 text-white hover:bg-red-600 transition"
-            >
-              Logout
-            </button>
-          </div>
-          
+              <img
+                src={avatar || 'https://via.placeholder.com/40'}
+                alt="Avatar"
+                className="h-10 w-10 rounded-full border-2 border-indigo-500"
+              />
+              <button
+                onClick={handleLogout}
+                className="text-sm px-3 py-1.5 rounded-md bg-red-500 text-white hover:bg-red-600 transition"
+              >
+                Logout
+              </button>
+            </div>
           ) : (
             <a href="/login" className="text-sm font-semibold text-gray-900">
               Log in/Register <span aria-hidden="true">&rarr;</span>
@@ -108,6 +105,56 @@ export default function Navbar() {
           )}
         </div>
       </nav>
+
+      {/* Mobile Menu */}
+      <Dialog open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)}>
+        <Dialog.Panel className="fixed inset-0 z-10 bg-white overflow-y-auto px-6 py-8">
+          <div className="flex items-center justify-between">
+            <div className="flex lg:flex-1">
+              <a href="#" className="-m-1.5 p-1.5">
+                <span className="sr-only">Social</span>
+                <img
+                  alt="Logo"
+                  src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600"
+                  className="h-8 w-auto"
+                />
+              </a>
+            </div>
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(false)}
+              className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700"
+            >
+              <XMarkIcon aria-hidden="true" className="h-6 w-6" />
+            </button>
+          </div>
+
+          <div className="mt-6">
+            {navigation.map((item) => (
+              <a key={item.name} href={item.href} className="block py-2 text-base font-semibold text-gray-900">
+                {item.name}
+              </a>
+            ))}
+          </div>
+
+          {user ? (
+            <div className="mt-6">
+              <button
+                onClick={handleLogout}
+                className="block py-2 text-base font-semibold text-red-500"
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <div className="mt-6">
+              <a href="/login" className="block py-2 text-base font-semibold text-gray-900">
+                Log in/Register
+              </a>
+            </div>
+          )}
+        </Dialog.Panel>
+      </Dialog>
     </header>
   )
 }

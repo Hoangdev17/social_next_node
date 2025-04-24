@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast, ToastContainer } from 'react-toastify';
 import Link from 'next/link';
-import { setAccessToken } from '@/lib/auth';
+import { api, setAccessToken } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 import { loginSuccess } from '@/lib/slices/authSlice';
@@ -40,9 +40,11 @@ const LoginPage = () => {
 
       console.log("Logging in with email: ", email, " and password: ", password);
       
-      const response = await axios.post<Data>('http://localhost:5000/api/auth/login', {
+      const response = await api.post<Data>('/auth/login', {
         email,
         password,
+      }, {
+        withCredentials: true, 
       });
 
       setUser(response.data); 
