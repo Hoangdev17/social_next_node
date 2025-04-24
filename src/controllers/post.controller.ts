@@ -323,7 +323,7 @@ export const deleteComment = async (req: Request, res: Response) => {
 
 export const getAllPosts = async (req: Request, res: Response) => {
     try {
-        const posts = await PostSchemas.find().sort({ updatedAt: -1 }).populate("createdBy", "username avatar");
+        const posts = await PostSchemas.find().sort({ createdAt: -1 }).populate("createdBy", "username avatar");
         res.status(200).json({ message: "Posts retrieved successfully", posts });
     } catch (error) {
         console.error(error);
