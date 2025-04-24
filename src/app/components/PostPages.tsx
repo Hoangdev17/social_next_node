@@ -40,8 +40,8 @@ const PostPages: React.FC = () => {
             setPosts(
                 response.data.posts.map(post => ({
                     ...post,
-                    comments: post.comments || [],  // Đảm bảo comments là mảng
-                    likes: post.likes || [],  // Đảm bảo likes là mảng
+                    comments: post.comments || [],  
+                    likes: post.likes || [],  
                 }))
             );
         } catch (err: unknown) {
@@ -75,7 +75,7 @@ const PostPages: React.FC = () => {
                 {},
                 {
                     headers: {
-                        Authorization: `Bearer ${accessToken}`, // Đảm bảo gửi token hợp lệ
+                        Authorization: `Bearer ${accessToken}`,
                     },
                 }
             );
@@ -99,21 +99,34 @@ const PostPages: React.FC = () => {
     
 
     if (loading) {
-        return <div>Loading...</div>;
-    }
-
-    if (error) {
-        return <div>Error: {error}</div>;
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <div className="loading-spinner" style={{ border: '4px solid #f3f3f3', borderTop: '4px solid #3498db', borderRadius: '50%', width: '40px', height: '40px', animation: 'spin 1s linear infinite' }}></div>
+                <style>
+                    {`
+                        @keyframes spin {
+                            0% { transform: rotate(0deg); }
+                            100% { transform: rotate(360deg); }
+                        }
+                    `}
+                </style>
+            </div>
+        );
     }
 
     if (posts.length === 0) {
-        return <div>No posts available.</div>;
+        return (
+            <div style={{ textAlign: 'center', marginTop: '50px', color: '#555' }}>
+                <h2 style={{ fontSize: '24px', marginBottom: '10px' }}>No Posts Available</h2>
+                <p style={{ fontSize: '16px', color: '#888' }}>Be the first to create a post and share your thoughts!</p>
+            </div>
+        );
     }
 
     return (
-        <div className="posts-container" style={{ maxWidth: '550px', margin: '0 auto', padding: '20px' }}>
+        <div className="posts-container bg" style={{ maxWidth: '550px', margin: '0 auto', padding: '20px' }}>
             {posts.map((post) => (
-                <div key={post._id} className="post" style={{ marginBottom: '20px', padding: '15px', border: '1px solid #ddd', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
+                <div key={post._id} className="post " style={{ marginBottom: '20px', padding: '15px', border: '1px solid #ddd', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
                     <div className="post-header" style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
                         <img src={post.createdBy.avatar} style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#bbb', marginRight: '10px' }} alt="avatar" />
                         <div>
@@ -164,8 +177,8 @@ const PostPages: React.FC = () => {
                     </div>
 
                     <div className="comments-section" style={{ marginTop: '15px' }}>
-                        <h3>Comments:</h3>
-                        {post.comments.length > 0 ? (
+                        {/* <h3>Comments:</h3> */}
+                        {/* {post.comments.length > 0 && (
                             <ul style={{ paddingLeft: '20px' }}>
                                 {post.comments.map((comment, index) => (
                                     <li key={index} style={{ marginBottom: '10px', fontSize: '14px' }}>
@@ -173,9 +186,7 @@ const PostPages: React.FC = () => {
                                     </li>
                                 ))}
                             </ul>
-                        ) : (
-                            <p>No comments available.</p>
-                        )}
+                        )} */}
                     </div>
                 </div>
             ))}
