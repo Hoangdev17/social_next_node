@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import { api } from '@/lib/auth';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/lib/store';
+import { Dispatch } from '@reduxjs/toolkit'; 
+import { fetchPostsStart, fetchPostsSuccess } from '@/lib/slices/postSlice';
+import CommentModal from './CommentModals';
 
 interface Post {
     _id: string;
@@ -24,15 +26,22 @@ interface PostResponse {
     posts: Post[];
 }
 
-const PostPages: React.FC = () => {
+const PostPages: React.FC = () => { 
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
+    const [openModal, setOpenModal] = useState<boolean>(false);
+    const [selectedPostId, setSelectedPostId] = useState<string>('');
+
+    const dispatch = useDispatch();
 
     const user = useSelector((state: RootState) => state.auth.user);
     const currentUserId = user?.id; 
 
     const fetchPosts = async () => {
+
+        dispatch(fetchPostsStart());
+
         try {
             const response = await api.get<PostResponse>('/posts/getPost');
             console.log("Fetched posts:", response.data.posts);  
@@ -44,6 +53,9 @@ const PostPages: React.FC = () => {
                     likes: post.likes || [],  
                 }))
             );
+
+            dispatch(fetchPostsSuccess(response.data.posts));
+
         } catch (err: unknown) {
             if (err instanceof Error) {
                 setError(err.message);
@@ -95,8 +107,46 @@ const PostPages: React.FC = () => {
             setLoading(false);
         }
     };
+
+    const handleComment = async (postId: string, comment: string) => {
+        try {
+            const accessToken = localStorage.getItem('accessToken');
+            if (!accessToken) {
+                setError('No access token found');
+                return;
+            }
+
+            const response = await api.post(
+                `/posts/comment/${postId}`,
+                { comment },
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                    },
+                }
+            );
+
+            fetchPosts();
+        } catch (err: any) {
+            if (err.response) {
+                console.error('Error response:', err.response);
+                setError(`Error: ${err.response.data.message || err.message}`);
+            } else {
+                console.error('Unexpected error:', err);
+                setError('Failed to add comment');
+            }
+        }
+    };
     
-    
+      const openCommentModal = (postId: string) => {
+            setSelectedPostId(postId);
+            setOpenModal(true);
+        };
+
+        const closeCommentModal = () => {
+            setOpenModal(false);
+            setSelectedPostId('');
+        };
 
     if (loading) {
         return (
@@ -163,6 +213,7 @@ const PostPages: React.FC = () => {
                             {post.likes.includes(currentUserId || '') ? '❤️' : '🤍'} {post.likes.length}
                             </button>
                             <button
+                            onClick={() => openCommentModal(post._id)}
                                 style={{
                                     background: 'none',
                                     border: 'none',
@@ -190,6 +241,13 @@ const PostPages: React.FC = () => {
                     </div>
                 </div>
             ))}
+
+            <CommentModal
+            open={openModal}
+            handleClose={closeCommentModal}
+            postId={selectedPostId}
+            onSubmit={handleComment}
+            />
         </div>
     );
 };
