@@ -330,3 +330,21 @@ export const getAllPosts = async (req: Request, res: Response) => {
         res.status(500).json({ message: "Error retrieving posts" });
     }
 };
+
+export const getComments = async (req: Request, res: Response) => {
+    try {
+        const { postId } = req.params;
+
+        const post = await PostSchemas.findById(postId).populate("comments.userId", "username avatar");
+
+        if (!post) {
+            res.status(404).json({ message: "Post not found" });
+            return;
+        }
+
+        res.status(200).json({ message: "Comments retrieved successfully", comments: post.comments });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error retrieving comments" });
+    }
+};
