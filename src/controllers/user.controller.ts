@@ -5,7 +5,7 @@ import UserSchemas from "~/models/User.schemas";
 export const getMe = async (req: Request, res: Response) => {
     try {
         const userId = req.userId;
-        const user = await UserSchemas.findById(userId).select("-password -refreshToken");
+        const user = await UserSchemas.findById(userId).select("-password -refreshToken").populate("followers", "username avatar");
         if (!user) {
             res.status(404).json({ message: "User not found" });
             return;
