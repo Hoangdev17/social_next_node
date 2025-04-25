@@ -45,7 +45,7 @@ const postSlice = createSlice({
             state.error = action.payload;
         },
         addPost(state, action: PayloadAction<Post>) {
-            state.posts.push(action.payload);
+            state.posts = [action.payload, ...state.posts];
         },
         deletePost(state, action: PayloadAction<string>) {
             state.posts = state.posts.filter(post => post._id !== action.payload);

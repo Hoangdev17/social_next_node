@@ -75,35 +75,9 @@ const CommentModal: React.FC<CommentModalProps> = ({ open, handleClose, postId, 
     if (commentText.trim()) {
       await onSubmit(postId, commentText);
       setCommentText('');
-      
       await fetchComments(postId);
-      
     }
   };
-
-  const handleComment = async (postId: string) => {
-    const token = localStorage.getItem('accessToken'); 
-    const headers = {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    };
-
-    try {
-
-      const res = await api.post(
-      `/posts/comment/${postId}`,
-      { comment: commentText },
-      { headers }
-      );
-
-      if (res.status === 200) {
-      await fetchComments(postId); 
-      }
-    } catch (error) {
-      console.error('Error while posting comment:', error);
-    }
-
-  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -128,10 +102,16 @@ const CommentModal: React.FC<CommentModalProps> = ({ open, handleClose, postId, 
           padding: 3,
           borderRadius: 2,
           boxShadow: 24,
-          width: 500,
+          width: 700,
           maxHeight: '80vh',
           overflowY: 'auto',
           border: '1px solid #e0e0e0',
+
+          // Ẩn scrollbar
+          scrollbarWidth: 'none',
+          '&::-webkit-scrollbar': {
+            display: 'none',
+          },
         }}
       >
         {loading ? (
@@ -140,48 +120,57 @@ const CommentModal: React.FC<CommentModalProps> = ({ open, handleClose, postId, 
           </Box>
         ) : (
           <>
-            {/* Hiển thị bài viết */}
             {post && (
-                <Box mb={3}>
-                  {/* Avatar + tên người đăng + thời gian */}
-                  <Stack direction="row" alignItems="center" spacing={1} mb={1}>
-                    <Avatar src={post.createdBy?.avatar} alt={post.createdBy?.username} sx={{ width: 35, height: 35 }} />
-                    <Box>
-                      <Typography variant="subtitle2" fontWeight="bold">
-                        {post.createdBy?.username}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {new Date(post.createdAt).toLocaleString()}
-                      </Typography>
-                    </Box>
-                  </Stack>
+              <Box mb={3}>
+                <Stack direction="row" alignItems="center" spacing={1} mb={1}>
+                  <Avatar src={post.createdBy?.avatar} alt={post.createdBy?.username} sx={{ width: 35, height: 35 }} />
+                  <Box>
+                    <Typography variant="subtitle2" fontWeight="bold">
+                      {post.createdBy?.username}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {new Date(post.createdAt).toLocaleString()}
+                    </Typography>
+                  </Box>
+                </Stack>
 
-                  {/* Tiêu đề bài viết */}
-                  <Typography variant="h6" fontWeight="bold" color="primary" gutterBottom>
-                    {post.content}
-                  </Typography>
+                <Typography variant="h6" fontWeight="bold" color="primary" gutterBottom>
+                  {post.content}
+                </Typography>
 
-                  {/* Ảnh bài viết */}
-                  {post.image && (
-                    <Box
-                      component="img"
-                      src={post.image}
-                      alt="Post image"
-                      sx={{
-                        width: '100%',
-                        height: 'auto',
-                        borderRadius: 2,
-                        mb: 2,
-                        maxHeight: 300,
-                        objectFit: 'contain',
-                      }}
-                    />
-                  )}
-                </Box>
-              )}
+                {post.image && (
+                  <Box
+                    component="img"
+                    src={post.image}
+                    alt="Post image"
+                    sx={{
+                      width: '100%',
+                      height: 'auto',
+                      borderRadius: 2,
+                      mb: 2,
+                      maxHeight: 300,
+                      objectFit: 'contain',
+                    }}
+                  />
+                )}
+              </Box>
+            )}
 
             {/* Danh sách bình luận */}
-            <Box mb={2} sx={{ maxHeight: '40vh', overflowY: 'auto' }}>
+            <Box
+              mb={2}
+              sx={{
+                maxHeight: '40vh',
+                overflowY: 'auto',
+                pr: 1,
+
+                // Ẩn scrollbar chỉ phần comment
+                scrollbarWidth: 'none',
+                '&::-webkit-scrollbar': {
+                  display: 'none',
+                },
+              }}
+            >
               {comments.map((item) => (
                 <Box key={item._id} mb={2} sx={{ padding: 2, borderRadius: 1, backgroundColor: '#f9f9f9' }}>
                   <Stack direction="row" spacing={2} alignItems="flex-start">
