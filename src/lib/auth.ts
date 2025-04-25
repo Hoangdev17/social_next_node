@@ -36,7 +36,6 @@ api.interceptors.response.use(
     // Kiểm tra nếu có lỗi 401 và token chưa được thử làm mới
     if ((error.response?.status === 401 && !originalRequest._retry) || error.response?.data?.message === "Invalid token.") {
       originalRequest._retry = true;
-      console.log("🔁 Access token expired. Trying to refresh...");
 
       try {
         // Gọi API refresh token mà không cần truyền refresh token trong header
@@ -44,9 +43,7 @@ api.interceptors.response.use(
           // Không cần thêm 'Authorization' header, server sẽ lấy từ cookies
         });
 
-        console.log("✅ Got new token:", res.data.accessToken);
-
-        setAccessToken(res.data.accessToken); // Lưu access token mới
+        setAccessToken(res.data.accessToken);
 
         // Thêm token mới vào header của request gốc
         originalRequest.headers['Authorization'] = `Bearer ${res.data.accessToken}`;

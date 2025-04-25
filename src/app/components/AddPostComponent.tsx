@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/lib/store';
 import {
@@ -9,130 +9,171 @@ import {
   Button,
   TextField,
   CircularProgress,
+  Avatar,
+  Typography,
+  Stack,
+  Box,
 } from '@mui/material';
 import { api } from '@/lib/auth';
 import { addPost } from '@/lib/slices/postSlice';
 
 const AddPostComponent: React.FC = () => {
-  const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
+  
+  // Sử dụng ref để ngăn chặn submit trùng lặp
+  const isSubmitting = useRef(false);
 
   const dispatch = useDispatch();
-
   const avatar = useSelector((state: RootState) => state.auth.user?.avatar);
   const username = useSelector((state: RootState) => state.auth.user?.username);
-  const posts = useSelector((state: RootState) => state.post.posts);
+
+  // Làm sạch khi component unmount
+  useEffect(() => {
+    return () => {
+      if (preview) {
+        URL.revokeObjectURL(preview);
+      }
+      isSubmitting.current = false;
+    };
+  }, []);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (preview) {
+        URL.revokeObjectURL(preview);
+      }
       setImage(file);
       setPreview(URL.createObjectURL(file));
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (title.trim() && content.trim()) {
-      setLoading(true);
-      setError(null);
+  const handleSubmit = async () => {
+    // Kiểm tra nhiều lớp để ngăn chặn submit trùng lặp
+    if (loading || isSubmitting.current) {
+      console.log("Request đang được xử lý, ngăn chặn submit trùng lặp");
+      return;
+    }
 
-      try {
-        const formData = new FormData();
-        formData.append('title', title);
-        formData.append('content', content);
-        if (image) {
-          formData.append('posts', image);
-        }
+    if (!content.trim()) {
+      setError('Nội dung là bắt buộc.');
+      return;
+    }
 
-        // Send the request to create the post
-        const response = await api.post<any>('/posts/create', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
+    // Đặt flag để ngăn chặn submit trùng lặp
+    setLoading(true);
+    isSubmitting.current = true;
+    setError(null);
 
-        const newPost = response.data;
-
-        // Dispatch action to update Redux store with the new post
-        dispatch(addPost(newPost));
-
-
-        // Reset form and close the modal
-        setTitle('');
-        setContent('');
-        setImage(null);
-        setPreview(null);
-        setOpen(false);
-
-      } catch (err) {
-        setError('An error occurred while creating the post.');
-      } finally {
-        setLoading(false);
+    try {
+      const formData = new FormData();
+      formData.append('content', content);
+      if (image) {
+        formData.append('posts', image);
       }
-    } else {
-      setError('Title and content are required.');
+
+      console.log("Bắt đầu gửi request API...");
+      const response = await api.post<any>('/posts/create', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      console.log("API trả về kết quả:", response.data);
+      
+      // Dispatch action chỉ một lần sau khi nhận response
+      dispatch(addPost(response.data));
+      
+      // Reset form
+      setContent('');
+      if (preview) {
+        URL.revokeObjectURL(preview);
+      }
+      setImage(null);
+      setPreview(null);
+      setOpen(false);
+    } catch (err) {
+      console.error("Lỗi khi tạo bài đăng:", err);
+      setError('Đã xảy ra lỗi khi tạo bài đăng.');
+    } finally {
+      setLoading(false);
+      // Trì hoãn reset isSubmitting để đảm bảo không có submit trùng lặp
+      setTimeout(() => {
+        isSubmitting.current = false;
+      }, 300);
+    }
+  };
+
+  const handleClose = () => {
+    if (!loading) {
+      setOpen(false);
+      setContent('');
+      setError(null);
+      if (preview) {
+        URL.revokeObjectURL(preview);
+        setPreview(null);
+      }
+      setImage(null);
     }
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6" style={{ maxWidth: '550px' }}>
-      {/* Avatar + input to open modal */}
-      <div className="flex items-center gap-3 mb-4">
-        <img
-          src={avatar || 'https://via.placeholder.com/40'}
-          alt="User Avatar"
-          className="w-10 h-10 rounded-full object-cover"
-        />
+    <div className="max-w-2xl mx-auto px-4 pt-6" style={{ maxWidth: '550px' }}>
+      {/* Avatar + input trigger */}
+      <div className="flex items-center gap-3 mb-5">
+        <Avatar src={avatar || undefined} alt={username} sx={{ width: 40, height: 40 }} />
         <input
           type="text"
-          placeholder={username ? `${username}, what's on your mind?` : "What's on your mind?"}
-          className="flex-1 h-10 px-4 border border-gray-300 rounded-full text-sm text-gray-700 placeholder-gray-500 hover:cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500"
-          onClick={() => setOpen(true)}
           readOnly
+          onClick={() => setOpen(true)}
+          placeholder={username ? `${username}, bạn đang nghĩ gì?` : "Bạn đang nghĩ gì?"}
+          className="flex-1 h-10 px-4 border border-gray-300 rounded-full text-sm text-gray-700 placeholder-gray-500 hover:cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
       </div>
 
-      {/* Create Post Dialog */}
-      <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>Create a New Post</DialogTitle>
+      {/* Dialog to create post */}
+      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+        <DialogTitle>Tạo bài đăng mới</DialogTitle>
         <DialogContent>
-          <form onSubmit={handleSubmit} className="pt-2">
-            <div className="mb-5">
-              <TextField
-                label="Title"
-                fullWidth
-                variant="outlined"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-              />
-            </div>
+          <div className="pt-2 space-y-4">
+            {/* User Info */}
+            <Stack direction="row" spacing={2} alignItems="center">
+              <Avatar src={avatar || undefined} alt={username} />
+              <Typography variant="subtitle1" fontWeight={600}>
+                {username}
+              </Typography>
+            </Stack>
 
-            <div className="mb-5">
-              <TextField
-                label="Content"
-                fullWidth
-                multiline
-                rows={4}
-                variant="outlined"
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                required
-              />
-            </div>
+            <hr className="mb-4 border-t border-gray-300" />
 
-            {/* Upload Image */}
-            <div className="mb-5">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Upload Image</label>
+            <TextField
+              label="Nội dung"
+              fullWidth
+              multiline
+              rows={4}
+              variant="outlined"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              required
+              disabled={loading}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: '30px',
+                  padding: '12px 16px',
+                },
+              }}
+            />
+
+            <Box mt={2}>
+              <Typography variant="subtitle2" mb={1}>
+                Tải lên hình ảnh
+              </Typography>
               <label
                 htmlFor="image-upload"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-md border border-gray-300 cursor-pointer hover:bg-gray-200 transition"
+                className={`inline-flex items-center justify-center gap-2 p-4 bg-gray-100 text-gray-700 rounded-full border border-gray-300 ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-200'} transition`}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -140,7 +181,7 @@ const AddPostComponent: React.FC = () => {
                   viewBox="0 0 24 24"
                   strokeWidth={1.5}
                   stroke="currentColor"
-                  className="w-5 h-5"
+                  className="w-6 h-6"
                 >
                   <path
                     strokeLinecap="round"
@@ -148,34 +189,63 @@ const AddPostComponent: React.FC = () => {
                     d="M3 16.5V6.75A2.25 2.25 0 015.25 4.5h13.5A2.25 2.25 0 0121 6.75v9.75m-18 0h18m-18 0a2.25 2.25 0 002.25 2.25h13.5A2.25 2.25 0 0021 16.5m-9-7.5l-3 4.5h6l-3-4.5z"
                   />
                 </svg>
-                <span>Choose Image</span>
+                <span className="text-sm">Chọn hình ảnh</span>
                 <input
                   id="image-upload"
                   type="file"
                   accept="image/*"
                   onChange={handleImageChange}
+                  disabled={loading}
                   className="hidden"
                 />
               </label>
 
               {preview && (
-                <img
-                  src={preview}
-                  alt="Preview"
-                  className="mt-3 rounded-lg max-h-60 object-contain border"
-                />
+                <div className="relative mt-3">
+                  <img
+                    src={preview}
+                    alt="Preview"
+                    className="rounded-lg max-h-60 object-contain border border-gray-300"
+                  />
+                  {!loading && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (preview) {
+                          URL.revokeObjectURL(preview);
+                        }
+                        setPreview(null);
+                        setImage(null);
+                      }}
+                      className="absolute top-2 right-2 bg-gray-800 bg-opacity-70 text-white rounded-full p-1 hover:bg-opacity-100"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
               )}
-            </div>
+            </Box>
 
-            {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-          </form>
+            {error && (
+              <Typography variant="body2" color="error" mt={1}>
+                {error}
+              </Typography>
+            )}
+          </div>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpen(false)} color="inherit">
-            Cancel
+          <Button onClick={handleClose} color="inherit" disabled={loading}>
+            Hủy
           </Button>
-          <Button onClick={handleSubmit} color="primary" disabled={loading}>
-            {loading ? <CircularProgress size={24} /> : 'Post'}
+          <Button
+            type="button"
+            color="primary"
+            onClick={handleSubmit}
+            disabled={loading || !content.trim()}
+          >
+            {loading ? <CircularProgress size={20} /> : 'Đăng'}
           </Button>
         </DialogActions>
       </Dialog>

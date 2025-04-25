@@ -46,7 +46,6 @@ const PostPages: React.FC = () => {
 
         try {
             const response = await api.get<PostResponse>('/posts/getPost');
-            console.log("Fetched posts:", response.data.posts);  
 
             setPosts(
                 response.data.posts.map(post => ({
@@ -57,8 +56,6 @@ const PostPages: React.FC = () => {
             );
 
             dispatch(fetchPostsSuccess(response.data.posts));
-
-            dispatch(addPost(response.data.posts[0]));
 
         } catch (err: unknown) {
             if (err instanceof Error) {
@@ -78,12 +75,11 @@ const PostPages: React.FC = () => {
     const handleLike = async (postId: string) => {
         try {
             const accessToken = localStorage.getItem('accessToken');
-            console.log("Access token:", accessToken);
+            
             if (!accessToken) {
                 setError('No access token found');
                 return;
             }
-            console.log("Liking post with ID:", postId);
     
             // Gửi yêu cầu POST đến backend
             const response = await api.post<PostResponse>(
