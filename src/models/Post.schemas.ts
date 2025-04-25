@@ -15,7 +15,7 @@ export interface IPost extends Document {
 const PostSchema: Schema = new Schema(
     {
         _id: { type: mongoose.Types.ObjectId, auto: true },
-        title: { type: String, required: true },
+        title: { type: String },
         content: { type: String, required: true },
         image: { type: String, required: false },
         likes: [{ type: mongoose.Types.ObjectId, ref: 'User' }],

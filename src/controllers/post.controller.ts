@@ -6,26 +6,29 @@ import { uploadImageToCloudinary } from "~/utils/upload";
 
 export const createPost = async (req: Request, res: Response) => {
     try {
-        const { title, content } = req.body;
-         const imageBuffer = req.file?.buffer;
+        const { content } = req.body;
+        const imageBuffer = req.file?.buffer;
 
         const userId = req.userId; 
 
         if (!userId) {
-            res.status(401).json({ message: "Unauthorized" });
-            return;
-        }
-
-        // Kiểm tra dữ liệu đầu vào
-        if (!title || !content || !imageBuffer) {
-             res.status(400).json({ message: "Title, content, and image are required" });
+             res.status(401).json({ message: "Unauthorized" });
              return;
         }
 
-        const imageUrl = await uploadImageToCloudinary(imageBuffer);
+        // Sửa lỗi kiểm tra điều kiện - chỉ cần content, image có thể không cần thiết
+        if (!content) {
+             res.status(400).json({ message: "Content is required" });
+             return;
+        }
+
+        let imageUrl = null;
+        // Chỉ upload ảnh nếu có imageBuffer
+        if (imageBuffer) {
+            imageUrl = await uploadImageToCloudinary(imageBuffer);
+        }
 
         const Post = await PostSchemas.create({
-            title,
             content,
             image: imageUrl,
             likes: [],
@@ -33,16 +36,16 @@ export const createPost = async (req: Request, res: Response) => {
             createdBy: userId,
         });
 
-        res.status(201).json({
+         res.status(201).json({
             message: "Post created successfully",
             post: Post,
         });
         return;
 
     } catch (error) {
-        res.status(500).json({ message: "Error creating post" });
-        console.error(error);
-        return;
+        console.error("Error creating post:", error);
+         res.status(500).json({ message: "Error creating post" });
+         return;
     }
 }
 
