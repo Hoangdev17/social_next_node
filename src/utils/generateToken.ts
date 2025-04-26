@@ -7,7 +7,7 @@ const accessTokenOptions: SignOptions = {
 };
 
 const refreshTokenOptions: SignOptions = {
-  expiresIn: '7d',  
+  expiresIn: '365d',  
 };
 
 // Hàm tạo Access Token

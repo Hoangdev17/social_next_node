@@ -36,9 +36,12 @@ export const createPost = async (req: Request, res: Response) => {
             createdBy: userId,
         });
 
+        const populatedPost = await PostSchemas.findById(Post._id)
+    .populate("createdBy", "username avatar");
+
          res.status(201).json({
             message: "Post created successfully",
-            post: Post,
+            post: populatedPost,
         });
         return;
 
@@ -349,5 +352,20 @@ export const getComments = async (req: Request, res: Response) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Error retrieving comments" });
+    }
+};
+
+export const getPostsByUser = async (req: Request, res: Response) => {
+    try {
+        const { userId } = req.params;
+
+        const posts = await PostSchemas.find({ createdBy: userId })
+            .sort({ createdAt: -1 })
+            .populate("createdBy", "username avatar");
+
+        res.status(200).json({ message: "Posts retrieved successfully", posts });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error retrieving posts by user" });
     }
 };
