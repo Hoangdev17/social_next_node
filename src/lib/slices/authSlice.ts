@@ -6,6 +6,18 @@ export interface UserProfile {
   email: string;
   bio: string;
   avatar: string;
+  followers: Follower[];
+  following: Following[];
+}
+
+interface Follower {
+  id: string;
+  username: string;
+  avatar: string;
+}
+
+interface Following {
+  id: string;
 }
 
 interface AuthState {
@@ -30,8 +42,24 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
     },
+    setUsername(state, action: PayloadAction<string>) {
+      if (state.user) {
+        state.user.username = action.payload;
+      } else {
+        // Nếu user chưa có, tạo tạm user mới chỉ với username
+        state.user = {
+          id: '',
+          username: action.payload,
+          email: '',
+          bio: '',
+          avatar: '',
+          followers: [],
+          following: []
+        };
+      }
+    },
   },
 });
 
-export const { loginSuccess, logout } = authSlice.actions;
+export const { loginSuccess, logout, setUsername } = authSlice.actions;
 export default authSlice.reducer;

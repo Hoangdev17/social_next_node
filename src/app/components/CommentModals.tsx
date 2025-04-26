@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Button, Typography, Box, TextField, Avatar, Stack, CircularProgress } from '@mui/material';
+import { Modal, Button, Typography, Box, TextField, Avatar, Stack, CircularProgress, useMediaQuery, useTheme } from '@mui/material';
 import { api } from '@/lib/auth';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store';
@@ -50,6 +50,10 @@ const CommentModal: React.FC<CommentModalProps> = ({ open, handleClose, postId, 
   const [post, setPost] = useState<IPost | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Use useMediaQuery to determine screen size
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // xs breakpoint
+
   const fetchPost = async (postId: string) => {
     try {
       const res = await api.get<PostResponse>(`/posts/getPost`);
@@ -99,11 +103,11 @@ const CommentModal: React.FC<CommentModalProps> = ({ open, handleClose, postId, 
           left: '50%',
           transform: 'translate(-50%, -50%)',
           backgroundColor: 'white',
-          padding: 3,
+          padding: { xs: 2, sm: 3 }, // Smaller padding on mobile
           borderRadius: 2,
           boxShadow: 24,
-          width: 700,
-          maxHeight: '80vh',
+          width: { xs: '90%', sm: 500, md: 700 }, // Responsive width
+          maxHeight: { xs: '85vh', sm: '80vh' }, // Slightly taller on mobile
           overflowY: 'auto',
           border: '1px solid #e0e0e0',
 
@@ -123,7 +127,11 @@ const CommentModal: React.FC<CommentModalProps> = ({ open, handleClose, postId, 
             {post && (
               <Box mb={3}>
                 <Stack direction="row" alignItems="center" spacing={1} mb={1}>
-                  <Avatar src={post.createdBy?.avatar} alt={post.createdBy?.username} sx={{ width: 35, height: 35 }} />
+                  <Avatar
+                    src={post.createdBy?.avatar}
+                    alt={post.createdBy?.username}
+                    sx={{ width: { xs: 30, sm: 35 }, height: { xs: 30, sm: 35 } }} // Smaller avatar on mobile
+                  />
                   <Box>
                     <Typography variant="subtitle2" fontWeight="bold">
                       {post.createdBy?.username}
@@ -134,7 +142,13 @@ const CommentModal: React.FC<CommentModalProps> = ({ open, handleClose, postId, 
                   </Box>
                 </Stack>
 
-                <Typography variant="h6" fontWeight="bold" color="primary" gutterBottom>
+                <Typography
+                  variant="h6"
+                  fontWeight="bold"
+                  color="primary"
+                  gutterBottom
+                  fontSize={{ xs: '1rem', sm: '1.25rem' }} // Smaller font on mobile
+                >
                   {post.content}
                 </Typography>
 
@@ -148,7 +162,7 @@ const CommentModal: React.FC<CommentModalProps> = ({ open, handleClose, postId, 
                       height: 'auto',
                       borderRadius: 2,
                       mb: 2,
-                      maxHeight: 300,
+                      maxHeight: { xs: 200, sm: 300 }, // Smaller image height on mobile
                       objectFit: 'contain',
                     }}
                   />
@@ -160,7 +174,7 @@ const CommentModal: React.FC<CommentModalProps> = ({ open, handleClose, postId, 
             <Box
               mb={2}
               sx={{
-                maxHeight: '40vh',
+                maxHeight: { xs: '30vh', sm: '40vh' }, // Adjust height for comments list
                 overflowY: 'auto',
                 pr: 1,
 
@@ -172,17 +186,42 @@ const CommentModal: React.FC<CommentModalProps> = ({ open, handleClose, postId, 
               }}
             >
               {comments.map((item) => (
-                <Box key={item._id} mb={2} sx={{ padding: 2, borderRadius: 1, backgroundColor: '#f9f9f9' }}>
-                  <Stack direction="row" spacing={2} alignItems="flex-start">
-                    <Avatar src={item.userId.avatar} alt={item.userId.username} sx={{ width: 40, height: 40 }} />
+                <Box
+                  key={item._id}
+                  mb={2}
+                  sx={{
+                    padding: { xs: 1, sm: 2 }, // Smaller padding on mobile
+                    borderRadius: 1,
+                    backgroundColor: '#f9f9f9',
+                  }}
+                >
+                  <Stack direction="row" spacing={{ xs: 1, sm: 2 }} alignItems="flex-start">
+                    <Avatar
+                      src={item.userId.avatar}
+                      alt={item.userId.username}
+                      sx={{ width: { xs: 30, sm: 40 }, height: { xs: 30, sm: 40 } }} // Smaller avatar on mobile
+                    />
                     <Box>
-                      <Typography variant="subtitle2" fontWeight="bold" color="primary">
+                      <Typography
+                        variant="subtitle2"
+                        fontWeight="bold"
+                        color="primary"
+                        fontSize={{ xs: '0.875rem', sm: '1rem' }} // Smaller font on mobile
+                      >
                         {item.userId.username}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        fontSize={{ xs: '0.75rem', sm: '0.875rem' }} // Smaller font on mobile
+                      >
                         {new Date(item.createdAt).toLocaleString()}
                       </Typography>
-                      <Typography variant="body1" mt={1}>
+                      <Typography
+                        variant="body1"
+                        mt={1}
+                        fontSize={{ xs: '0.875rem', sm: '1rem' }} // Smaller font on mobile
+                      >
                         {item.comment}
                       </Typography>
                     </Box>
@@ -195,7 +234,7 @@ const CommentModal: React.FC<CommentModalProps> = ({ open, handleClose, postId, 
             <TextField
               fullWidth
               multiline
-              rows={3}
+              rows={isMobile ? 2 : 3} // Dynamically set rows based on screen size
               variant="outlined"
               placeholder="Nhập bình luận của bạn..."
               value={commentText}
@@ -204,13 +243,22 @@ const CommentModal: React.FC<CommentModalProps> = ({ open, handleClose, postId, 
                 '& .MuiOutlinedInput-root': {
                   borderRadius: '10px',
                   backgroundColor: '#fafafa',
+                  fontSize: { xs: '0.875rem', sm: '1rem' }, // Smaller font on mobile
                 },
               }}
             />
 
             {/* Nút gửi và hủy */}
             <Box mt={2} display="flex" justifyContent="flex-end" gap={1}>
-              <Button variant="outlined" onClick={handleClose} sx={{ borderRadius: 2, px: 3 }}>
+              <Button
+                variant="outlined"
+                onClick={handleClose}
+                sx={{
+                  borderRadius: 2,
+                  px: { xs: 2, sm: 3 }, // Smaller padding on mobile
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' }, // Smaller font on mobile
+                }}
+              >
                 Hủy
               </Button>
               <Button
@@ -219,7 +267,8 @@ const CommentModal: React.FC<CommentModalProps> = ({ open, handleClose, postId, 
                 onClick={handleSubmit}
                 sx={{
                   borderRadius: 2,
-                  px: 3,
+                  px: { xs: 2, sm: 3 }, // Smaller padding on mobile
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' }, // Smaller font on mobile
                   backgroundColor: '#3f51b5',
                   '&:hover': { backgroundColor: '#303f9f' },
                 }}

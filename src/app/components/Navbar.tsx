@@ -9,10 +9,10 @@ import { loginSuccess, logout } from '@/lib/slices/authSlice';
 import { RootState } from '@/lib/store';
 
 const navigation = [
-  { name: 'Home', href: '#' },
-  { name: 'Watch', href: '#' },
-  { name: 'Marketplace', href: '#' },
-  { name: 'TikTok', href: '#' },
+  { name: 'Home', href: '/' },
+  { name: 'Chat', href: '/chat' },
+  { name: 'Marketplace', href: '/marketplace' }, 
+  { name: 'TikTok', href: '/tiktok' },  
 ]
 
 export default function Navbar() {
@@ -51,11 +51,15 @@ export default function Navbar() {
     router.push('/login');
   }
 
+  const handleNavigateProfile = () => {
+    router.push("/profile");
+  }
+
   return (
     <header className="absolute fixed inset-x-0 top-0 z-50 bg-gray-400">
       <nav aria-label="Global" className="flex items-center justify-between p-6 lg:px-8">
         <div className="flex lg:flex-1">
-          <a href="#" className="-m-1.5 p-1.5">
+          <a href="/" className="-m-1.5 p-1.5">
             <span className="sr-only">Social</span>
             <img
               alt="Logo"
@@ -89,7 +93,8 @@ export default function Navbar() {
               <img
                 src={avatar || 'https://via.placeholder.com/40'}
                 alt="Avatar"
-                className="h-10 w-10 rounded-full border-2 border-indigo-500"
+                className="h-10 w-10 rounded-full border-2 border-indigo-500 transition-transform duration-200 ease-in-out hover:scale-110 cursor-pointer"
+                onClick={handleNavigateProfile} 
               />
               <button
                 onClick={handleLogout}

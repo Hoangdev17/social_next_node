@@ -9,8 +9,9 @@ import { toast, ToastContainer } from 'react-toastify';
 import Link from 'next/link';
 import { api, setAccessToken } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { loginSuccess } from '@/lib/slices/authSlice';
+import { RootState } from '@/lib/store';
 
 interface Data {
   accessToken: string;
@@ -20,7 +21,19 @@ interface Data {
     email: string;
     bio: string;
     avatar: string;
+    followers: Follower[];
+    following: Following[];
   }
+}
+
+interface Follower {
+  id: string;
+  username: string;
+  avatar: string;
+}
+
+interface Following {
+  id: string;
 }
 
 const LoginPage = () => {
@@ -46,7 +59,7 @@ const LoginPage = () => {
       }, {
         withCredentials: true, 
       });
-
+     
       setUser(response.data); 
       setLoading(false);
 
@@ -61,8 +74,6 @@ const LoginPage = () => {
       localStorage.setItem('accessToken', response.data.accessToken);
       localStorage.setItem('user', JSON.stringify(response.data.user));
 
-      router.push('/');
-
       toast.success('Login successful!');
       
     } catch (error) {
@@ -71,6 +82,18 @@ const LoginPage = () => {
       toast.error('Login failed. Please check your credentials.');
     }
   };
+
+  const userId = useSelector((state: RootState) => state.auth.user?.id);
+
+ useEffect(() => {
+  if (userId) {
+    console.log('User ID after login:', userId);
+    // Đảm bảo router push sau khi userId được cập nhật.
+    setTimeout(() => {
+      router.push('/');
+    }, 100);  // Delay 100ms để đảm bảo trạng thái đã được cập nhật
+  }
+}, [userId]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">

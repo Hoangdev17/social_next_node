@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { api } from '@/lib/auth';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/lib/store';
-import { Dispatch } from '@reduxjs/toolkit'; 
-import { addPost, fetchPostsStart, fetchPostsSuccess } from '@/lib/slices/postSlice';
+import { fetchPostsStart, fetchPostsSuccess, likePost, setPost, commentPost } from '@/lib/slices/postSlice';
 import CommentModal from './CommentModals';
+import io from 'socket.io-client';
 
 interface Post {
     _id: string;
@@ -12,7 +12,7 @@ interface Post {
     content: string;
     image: string | null;
     likes: string[];
-    comments: string[];
+    comments: Comment[];
     createdBy: {
         _id: string;
         username: string;
@@ -22,40 +22,44 @@ interface Post {
     updatedAt: string;
 }
 
+interface Comment {
+    userId: string;
+    commentId: string;
+    comment: string;
+    createdAt: string;
+}
+
 interface PostResponse {
     posts: Post[];
 }
 
-const PostPages: React.FC = () => { 
+const PostPages: React.FC = () => {
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [openModal, setOpenModal] = useState<boolean>(false);
     const [selectedPostId, setSelectedPostId] = useState<string>('');
+    const [socket, setSocket] = useState<any>(null);
 
     const dispatch = useDispatch();
-
     const user = useSelector((state: RootState) => state.auth.user);
     const post = useSelector((state: RootState) => state.post.posts);
 
-    const currentUserId = user?.id; 
+    const currentUserId = user?.id;
 
+    // Fetch posts function
     const fetchPosts = async () => {
-
         dispatch(fetchPostsStart());
 
         try {
             const response = await api.get<PostResponse>('/posts/getPost');
+            setPosts(response.data.posts.map(post => ({
+                ...post,
+                comments: post.comments || [],
+                likes: post.likes || [],
+            })));
 
-            setPosts(
-                response.data.posts.map(post => ({
-                    ...post,
-                    comments: post.comments || [],  
-                    likes: post.likes || [],  
-                }))
-            );
-
-            dispatch(fetchPostsSuccess(response.data.posts));
+            dispatch(setPost(response.data.posts));
 
         } catch (err: unknown) {
             if (err instanceof Error) {
@@ -68,10 +72,31 @@ const PostPages: React.FC = () => {
         }
     };
 
+    // Set up Socket connection
+    useEffect(() => {
+        const socketConnection = io('http://localhost:5000');
+        setSocket(socketConnection);
+
+        // Listen for 'postUpdate' or a custom event sent by the backend
+        socketConnection.on('postLiked', ({ postId, userId }: { postId: string, userId: string }) => {
+            dispatch(likePost({ postId, userId }));
+        });
+
+        socketConnection.on('postCommented', ({ postId, comment, userId }: { postId: string, comment: string, userId: string }) => {
+            dispatch(commentPost({ postId, comment, userId }));
+        });
+
+        return () => {
+            socketConnection.disconnect();
+        };
+    }, [dispatch]);
+
+    // Fetch posts on component mount
     useEffect(() => {
         fetchPosts();
-    }, [post]);
+    }, [dispatch]);
 
+    // Handle like
     const handleLike = async (postId: string) => {
         try {
             const accessToken = localStorage.getItem('accessToken');
@@ -80,36 +105,21 @@ const PostPages: React.FC = () => {
                 setError('No access token found');
                 return;
             }
-    
-            // Gửi yêu cầu POST đến backend
-            const response = await api.post<PostResponse>(
-                `/posts/like/${postId}`,
-                {},
-                {
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`,
-                    },
-                }
-            );
 
+            await api.post<PostResponse>(`/posts/like/${postId}`, {}, {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            });
 
-
-            fetchPosts();
-
+            socket.emit('likePost', postId, user?.id);
         } catch (err: any) {
-            if (err.response) {
-                // Log lỗi từ server
-                console.error('Error response:', err.response);
-                setError(`Error: ${err.response.data.message || err.message}`);
-            } else {
-                console.error('Unexpected error:', err);
-                setError('Failed to like post');
-            }
-        } finally {
-            setLoading(false);
+            console.error(err);
+            setError('Failed to like post');
         }
     };
 
+    // Handle comment
     const handleComment = async (postId: string, comment: string) => {
         try {
             const accessToken = localStorage.getItem('accessToken');
@@ -117,40 +127,41 @@ const PostPages: React.FC = () => {
                 setError('No access token found');
                 return;
             }
-
-            const response = await api.post(
-                `/posts/comment/${postId}`,
-                { comment },
-                {
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`,
-                    },
-                }
-            );
-            
-
-            fetchPosts();
-        } catch (err: any) {
-            if (err.response) {
-                console.error('Error response:', err.response);
-                setError(`Error: ${err.response.data.message || err.message}`);
-            } else {
-                console.error('Unexpected error:', err);
-                setError('Failed to add comment');
+    
+            // Gửi comment lên server
+            const response = await api.post(`/posts/comment/${postId}`, { comment }, {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            });
+    
+            // Không dispatch comment vào Redux nếu nó đã có
+            if (response.status === 200) {
+    
+                // Emit socket sau khi comment đã thành công
+                socket.emit('commentPost', { postId, comment, userId: currentUserId || '' });
             }
+    
+        } catch (err: any) {
+            console.error(err);
+            setError('Failed to add comment');
         }
     };
     
-      const openCommentModal = (postId: string) => {
-            setSelectedPostId(postId);
-            setOpenModal(true);
-        };
 
-        const closeCommentModal = () => {
-            setOpenModal(false);
-            setSelectedPostId('');
-        };
+    // Open comment modal
+    const openCommentModal = (postId: string) => {
+        setSelectedPostId(postId);
+        setOpenModal(true);
+    };
 
+    // Close comment modal
+    const closeCommentModal = () => {
+        setOpenModal(false);
+        setSelectedPostId('');
+    };
+
+    // If loading
     if (loading) {
         return (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -167,7 +178,8 @@ const PostPages: React.FC = () => {
         );
     }
 
-    if (posts.length === 0) {
+    // No posts available
+    if (post.length === 0) {
         return (
             <div style={{ textAlign: 'center', marginTop: '50px', color: '#555' }}>
                 <h2 style={{ fontSize: '24px', marginBottom: '10px' }}>No Posts Available</h2>
@@ -176,6 +188,7 @@ const PostPages: React.FC = () => {
         );
     }
 
+    // Render posts
     return (
         <div className="posts-container bg" style={{ maxWidth: '550px', margin: '0 auto', padding: '20px' }}>
             {post.map((post, index) => (
@@ -232,12 +245,11 @@ const PostPages: React.FC = () => {
                 </div>
             ))}
 
-
             <CommentModal
-            open={openModal}
-            handleClose={closeCommentModal}
-            postId={selectedPostId}
-            onSubmit={handleComment}
+                open={openModal}
+                handleClose={closeCommentModal}
+                postId={selectedPostId}
+                onSubmit={handleComment}
             />
         </div>
     );

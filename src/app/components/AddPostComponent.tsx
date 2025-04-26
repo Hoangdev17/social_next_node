@@ -15,7 +15,7 @@ import {
   Box,
 } from '@mui/material';
 import { api } from '@/lib/auth';
-import { addPost } from '@/lib/slices/postSlice';
+import { addPost, setPost } from '@/lib/slices/postSlice';
 
 const AddPostComponent: React.FC = () => {
   const [content, setContent] = useState('');
@@ -32,16 +32,6 @@ const AddPostComponent: React.FC = () => {
   const avatar = useSelector((state: RootState) => state.auth.user?.avatar);
   const username = useSelector((state: RootState) => state.auth.user?.username);
 
-  // Làm sạch khi component unmount
-  useEffect(() => {
-    return () => {
-      if (preview) {
-        URL.revokeObjectURL(preview);
-      }
-      isSubmitting.current = false;
-    };
-  }, []);
-
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -54,11 +44,6 @@ const AddPostComponent: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    // Kiểm tra nhiều lớp để ngăn chặn submit trùng lặp
-    if (loading || isSubmitting.current) {
-      console.log("Request đang được xử lý, ngăn chặn submit trùng lặp");
-      return;
-    }
 
     if (!content.trim()) {
       setError('Nội dung là bắt buộc.');
@@ -84,8 +69,7 @@ const AddPostComponent: React.FC = () => {
 
       console.log("API trả về kết quả:", response.data);
       
-      // Dispatch action chỉ một lần sau khi nhận response
-      dispatch(addPost(response.data));
+      dispatch(addPost(response.data.post));
       
       // Reset form
       setContent('');
@@ -121,7 +105,7 @@ const AddPostComponent: React.FC = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 pt-6" style={{ maxWidth: '550px' }}>
+    <div className="max-w-2xl mx-auto px-4 pt-6" >
       {/* Avatar + input trigger */}
       <div className="flex items-center gap-3 mb-5">
         <Avatar src={avatar || undefined} alt={username} sx={{ width: 40, height: 40 }} />

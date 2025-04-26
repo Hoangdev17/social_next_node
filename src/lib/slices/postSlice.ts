@@ -18,7 +18,7 @@ interface Post {
     content: string;
     image: string | null;
     likes: string[];
-    comments: string[];
+    comments: Comment[]; 
     createdBy: {
         _id: string;
         username: string;
@@ -26,6 +26,12 @@ interface Post {
     };
     createdAt: string;
     updatedAt: string;
+}
+
+interface Comment {
+    userId: string;
+    comment: string;
+    createdAt: string;
 }
 
 const postSlice = createSlice({
@@ -45,15 +51,42 @@ const postSlice = createSlice({
             state.error = action.payload;
         },
         addPost(state, action: PayloadAction<Post>) {
-            state.posts = [action.payload, ...state.posts];
+            state.posts.unshift(action.payload);
         },
         deletePost(state, action: PayloadAction<string>) {
             state.posts = state.posts.filter(post => post._id !== action.payload);
+        },
+        setPost(state, action: PayloadAction<Post[]>) {
+            state.posts = action.payload;
         },
         updatePost(state, action: PayloadAction<Post>) {
             const index = state.posts.findIndex(post => post._id === action.payload._id);
             if (index !== -1) {
                 state.posts[index] = action.payload;
+            }
+        },
+        likePost: (state, action: PayloadAction<{ postId: string; userId: string }>) => {
+            const { postId, userId } = action.payload;
+            const post = state.posts.find((p) => p._id === postId);
+            if (post) {
+                if (post.likes.includes(userId)) {
+                    post.likes = post.likes.filter((id) => id !== userId);
+                } else {
+                    post.likes.push(userId);
+                }
+            }
+        },
+        
+        commentPost: (state, action: PayloadAction<{ postId: string; comment: string; userId: string }>) => {
+            const { postId, comment, userId } = action.payload;
+            const post = state.posts.find((p) => p._id === postId);
+            if (post) {
+                const newComment: Comment = {
+                    userId,
+                    comment,
+                    createdAt: new Date().toISOString(),
+                };
+                post.comments.push(newComment);  
             }
         },
     },
@@ -66,6 +99,9 @@ export const {
     addPost,
     deletePost,
     updatePost,
+    likePost,
+    setPost,
+    commentPost,  
 } = postSlice.actions;
 
 export default postSlice.reducer;
