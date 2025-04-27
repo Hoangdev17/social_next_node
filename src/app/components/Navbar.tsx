@@ -11,7 +11,7 @@ import { RootState } from '@/lib/store';
 const navigation = [
   { name: 'Home', href: '/' },
   { name: 'Chat', href: '/chat' },
-  { name: 'Marketplace', href: '/marketplace' }, 
+  { name: 'Follow', href: '/follow' }, 
   { name: 'TikTok', href: '/tiktok' },  
 ]
 

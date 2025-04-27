@@ -63,12 +63,12 @@ const LoginPage = () => {
       setUser(response.data); 
       setLoading(false);
 
-      console.log("Login response: ", response.data.user);
+      // console.log("Login response: ", response.data.user);
 
       dispatch(loginSuccess({
         user: response.data.user,
         token: response.data.accessToken,
-      }));      
+      })); 
 
       setAccessToken(response.data.accessToken);
       localStorage.setItem('accessToken', response.data.accessToken);

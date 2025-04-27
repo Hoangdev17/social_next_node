@@ -6,6 +6,7 @@ interface UserProfile {
     avatar: string;
     username: string;
     email: string;
+    createdAt: Date;
 }
 
 const MiniProfile: React.FC = () => {
@@ -141,7 +142,7 @@ const MiniProfile: React.FC = () => {
                         fontSize: '0.875rem',
                     }}
                 >
-                    Member since: {new Date().getFullYear()}
+                    Member since: {new Date(profile.createdAt).getFullYear()}
                 </Typography>
                 <Box
                     component="a"

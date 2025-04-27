@@ -17,7 +17,7 @@ export default function Home() {
         display: 'flex',
         flexDirection: { xs: 'column', md: 'row' },
         minHeight: '100vh',
-        mt: { xs: 8, md: 12 }, // Adjust margin-top for navbar (24px = 6rem)
+        mt: { xs: 8, md: 12 },
         overflow: 'hidden',
         bgcolor: '#ffffff',
       }}
@@ -35,7 +35,7 @@ export default function Home() {
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
           '&::-webkit-scrollbar': { display: 'none' },
-          display: { xs: 'none', md: 'block' }, // Hide on mobile, show on desktop
+          display: { xs: 'none', md: 'block' },
         }}
       >
         <MiniProfile />
