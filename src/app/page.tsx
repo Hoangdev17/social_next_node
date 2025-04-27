@@ -6,10 +6,17 @@ import PostPages from './components/PostPages';
 import FollowerComponent from './components/FollowerComponent';
 import MiniProfile from './components/MiniProfile';
 import AddPostComponent from './components/AddPostComponent';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md')); // Breakpoint for mobile/tablet (< 900px)
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  const router = useRouter();
+
+  if(!localStorage.getItem('accessToken')){
+    router.push("/login");
+  }
 
   return (
     <Box

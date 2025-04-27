@@ -8,16 +8,13 @@ import { vi } from 'date-fns/locale/vi';
 import { api } from '@/lib/auth';
 import { RootState } from '@/lib/store';
 import { Avatar } from '@mui/material';
+import { useRouter } from 'next/navigation';
 
-interface Follower {
+interface User {
   _id: string;
   username: string;
   avatar?: string;
   isOnline?: boolean;
-}
-
-interface Following {
-  _id: string;
 }
 
 export interface UserProfile {
@@ -26,8 +23,8 @@ export interface UserProfile {
   email: string;
   bio: string;
   avatar: string;
-  followers: Follower[];
-  following: Following[];
+  followers: User[];
+  following: User[];
 }
 
 interface Message {
@@ -39,42 +36,45 @@ interface Message {
 }
 
 const ChatPage = () => {
-  const [followingUsers, setFollowingUsers] = useState<Follower[]>([]);
-  const [selectedUser, setSelectedUser] = useState<Follower | null>(null);
+  const [users, setUsers] = useState<User[]>([]); // Cập nhật lại danh sách người dùng
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [message, setMessage] = useState('');
   const [chat, setChat] = useState<Message[]>([]);
   const socketRef = useRef<Socket | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const userId = useSelector((state: RootState) => state.auth.user?.id);
+  const router = useRouter();
 
-  const fetchFollowingUsers = useCallback(async () => {
+  if(!localStorage.getItem("accessToken")){
+    router.push("/login");
+  }
+
+  const fetchUsers = useCallback(async () => {
     try {
       const response = await api.get<UserProfile>('/users/me', {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
         },
       });
-      setFollowingUsers(response.data.followers || []);
+  
+      // Kết hợp followers và following và loại bỏ người dùng trùng
+      const allUsers = [
+        ...response.data.followers,
+        ...response.data.following,
+      ];
+  
+      // Loại bỏ user trùng lặp
+      const uniqueUsers = [
+        ...new Map(allUsers.map((user) => [user._id, user])).values(),
+      ];
+  
+      setUsers(uniqueUsers); // Cập nhật danh sách user
     } catch (error) {
-      console.error('Error fetching followers:', error);
-      setFollowingUsers([]);
+      console.error('Error fetching users:', error);
+      setUsers([]);
     }
   }, []);
-
-  const fetchChatHistory = useCallback(async (toUserId: string) => {
-    try {
-      const response = await api.get<Message[]>(`/messages/history/${toUserId}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-        },
-      });
-      setChat(response.data || []);
-    } catch (error) {
-      console.error('Failed to fetch chat history:', error);
-      setChat([]);
-    }
-  }, []);
-
+  
   const scrollToBottom = useCallback(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTo({
@@ -84,10 +84,71 @@ const ChatPage = () => {
     }
   }, []);
 
+  const fetchChatHistory = useCallback(async (toUserId: string, skip: number = 0, limit: number = 20) => {
+    if (!toUserId) return;
+  
+    try {
+      const response = await api.get<Message[]>(`/messages/history/${toUserId}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+        },
+        params: { skip, limit },
+      });
+  
+      console.log('Chat history response:', response.data);
+  
+      if (skip === 0) {
+        setChat(response.data.reverse());
+        scrollToBottom(); // Cuộn xuống dưới cùng khi tải lần đầu
+      } else {
+        setChat((prevChat) => [...response.data.reverse(), ...prevChat]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch chat history:', error);
+    }
+  }, [scrollToBottom]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (chatContainerRef.current) {
+        const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
+  
+        // Khi cuộn lên tới đầu
+        if (scrollTop === 0) {
+          const skip = chat.length;
+          fetchChatHistory(selectedUser?._id || '', skip, 20);
+        }
+  
+       
+      }
+    };
+  
+    const chatContainer = chatContainerRef.current;
+    chatContainer?.addEventListener('scroll', handleScroll);
+  
+    return () => {
+      chatContainer?.removeEventListener('scroll', handleScroll);
+    };
+  }, [chat, selectedUser?._id, fetchChatHistory]);
+
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      const chatContainer = chatContainerRef.current;
+  
+      // Khi tải thêm tin nhắn, giữ lại vị trí cuộn cũ
+      const previousScrollTop = chatContainer.scrollHeight - chatContainer.scrollTop - chatContainer.clientHeight;
+  
+      setTimeout(() => {
+        chatContainer.scrollTop = chatContainer.scrollHeight - previousScrollTop;
+      }, 0);
+    }
+  }, [chat]);
+  
+
   useEffect(() => {
     if (!userId) return;
 
-    fetchFollowingUsers();
+    fetchUsers();
 
     socketRef.current = io('http://localhost:5000', {
       auth: { userId },
@@ -103,7 +164,7 @@ const ChatPage = () => {
     });
 
     socketRef.current.on('user_status', ({ userId, isOnline }: { userId: string; isOnline: boolean }) => {
-      setFollowingUsers((prev) =>
+      setUsers((prev) =>
         prev.map((user) => (user._id === userId ? { ...user, isOnline } : user))
       );
     });
@@ -115,16 +176,34 @@ const ChatPage = () => {
     return () => {
       socketRef.current?.disconnect();
     };
-  }, [userId, fetchFollowingUsers]);
+  }, [userId, fetchUsers]);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [chat, selectedUser]);
+    if (chat.length > 0 && selectedUser) {
+      
+      setTimeout(() => {
+        scrollToBottom();
+      }, 100); 
+    }
+  }, [chat, selectedUser, scrollToBottom]);
+  
 
-  const handleSelectUser = useCallback((user: Follower) => {
-    setSelectedUser(user);
-    fetchChatHistory(user._id);
-  }, [fetchChatHistory]);
+  const handleSelectUser = useCallback(
+    (user: User) => {
+      if (user._id === selectedUser?._id) return;
+      setSelectedUser(user);
+      setChat([]); 
+      fetchChatHistory(user._id, 0, 20);
+      
+     
+      setTimeout(() => {
+        scrollToBottom(); 
+      }, 100); 
+    },
+    [fetchChatHistory, selectedUser, scrollToBottom]
+  );
+  
+  
 
   const handleSend = useCallback((e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -149,8 +228,8 @@ const ChatPage = () => {
           <h2 className="text-lg font-semibold text-gray-900">Tin nhắn</h2>
         </div>
         <div className="flex-1 overflow-y-auto bg-gray-50">
-          {followingUsers.length > 0 ? (
-            followingUsers.map((user) => (
+          {users.length > 0 ? (
+            users.map((user) => (
               <div
                 key={user._id}
                 onClick={() => handleSelectUser(user)}
@@ -159,11 +238,11 @@ const ChatPage = () => {
                 }`}
               >
                 <div className="relative">
-                <Avatar
-                  src={user.avatar || '/default-avatar.png'}
-                  alt={`${user.username}'s avatar`}
-                  sx={{ width: 48, height: 48 }}
-                />
+                  <Avatar
+                    src={user.avatar || '/default-avatar.png'}
+                    alt={`${user.username}'s avatar`}
+                    sx={{ width: 48, height: 48 }}
+                  />
                   {user.isOnline && (
                     <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
                   )}

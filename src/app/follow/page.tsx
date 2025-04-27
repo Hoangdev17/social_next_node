@@ -6,6 +6,7 @@ import { RootState } from '@/lib/store';
 import { Avatar } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useRouter } from 'next/navigation';
 
 interface User {
   _id: string;
@@ -28,60 +29,60 @@ interface Following {
 
 const FollowPage = () => {
   const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [followLoading, setFollowLoading] = useState<string | null>(null);
 
   const currentUser = useSelector((state: RootState) => state.auth.user);
   const isAuthLoading = useSelector((state: RootState) => state.auth.isLoading);
   const dispatch = useDispatch();
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await api.get<User[]>('/users/getAll');
-        const usersWithFollowersFollowing = response.data.map((user) => ({
-          ...user,
-          _id: String(user._id).trim(),
-          followers: (user.followers ?? []).map((f) => ({ id: String(f.id).trim() })),
-          following: (user.following ?? []).map((f) => ({ id: String(f.id).trim() })),
-        }));
-        setUsers(usersWithFollowersFollowing);
-      } catch (error) {
-        console.error('Error fetching users:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const router = useRouter();
 
+  if(!localStorage.getItem("accessToken")){
+    router.push("/login");
+  }
+
+  const fetchUsers = async () => {
+    try {
+      const res = await api.get<User[]>('/users/getAll');
+      setUsers(res.data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    
+    
     if (!isAuthLoading) {
       fetchUsers();
     }
   }, [isAuthLoading]);
 
   const handleFollow = async (userId: string) => {
-    if (!currentUser || !currentUser.id) return;
+    if (!currentUser?.id) return;
 
     try {
       setFollowLoading(userId);
       const accessToken = localStorage.getItem('accessToken');
-      const response = await api.post(
-        `/users/${userId}/follow`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
+      await api.post(`/users/${userId}/follow`, {}, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      setUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user._id === userId
+            ? { ...user, followers: [...user.followers, { id: currentUser.id }] }
+            : user
+        )
       );
 
-      if (response.status === 200) {
-        setUsers((prevUsers) =>
-          prevUsers.map((user) =>
-            user._id === userId
-              ? { ...user, followers: [...user.followers, { id: String(currentUser.id).trim() }] }
-              : user
-          )
-        );
-        dispatch(updateUserFollowing({ userId, isFollowing: true }));
-      }
+      await fetchUsers();
+
+      dispatch(updateUserFollowing({ userId, isFollowing: true }));
+      
     } catch (error) {
       console.error('Error following user:', error);
     } finally {
@@ -90,29 +91,27 @@ const FollowPage = () => {
   };
 
   const handleUnfollow = async (userId: string) => {
-    if (!currentUser || !currentUser.id) return;
+    if (!currentUser?.id) return;
 
     try {
       setFollowLoading(userId);
       const accessToken = localStorage.getItem('accessToken');
-      const response = await api.post(
-        `/users/${userId}/unfollow`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
+      await api.post(`/users/${userId}/unfollow`, {}, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      setUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user._id === userId
+            ? { ...user, followers: user.followers.filter((f) => f.id !== currentUser.id) }
+            : user
+        )
       );
 
-      if (response.status === 200) {
-        setUsers((prevUsers) =>
-          prevUsers.map((user) =>
-            user._id === userId
-              ? { ...user, followers: user.followers.filter((f) => f.id !== currentUser.id) }
-              : user
-          )
-        );
-        dispatch(updateUserFollowing({ userId, isFollowing: false }));
-      }
+      await fetchUsers();
+
+      dispatch(updateUserFollowing({ userId, isFollowing: false }));
+
     } catch (error) {
       console.error('Error unfollowing user:', error);
     } finally {
@@ -120,15 +119,7 @@ const FollowPage = () => {
     }
   };
 
-  if (isAuthLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen text-gray-500">
-        Loading authentication...
-      </div>
-    );
-  }
-
-  if (loading) {
+  if (isAuthLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen text-gray-500">
         Loading...
@@ -136,7 +127,7 @@ const FollowPage = () => {
     );
   }
 
-  if (!currentUser || !currentUser.id) {
+  if (!currentUser?.id) {
     return (
       <div className="flex items-center justify-center min-h-screen text-gray-500">
         Please log in to follow users.
@@ -145,9 +136,7 @@ const FollowPage = () => {
   }
 
   const currentUserId = currentUser.id;
-  const otherUsers = users.filter((user) => String(user._id).trim() !== currentUserId);
-
-  
+  const otherUsers = users.filter((user) => user._id !== currentUserId);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center py-6 px-4 mt-24">
@@ -157,9 +146,8 @@ const FollowPage = () => {
         </h1>
         <ul className="space-y-3">
           {otherUsers.map((user) => {
-            const isFollowing = currentUser.following.some((f) => f.id === user._id);
-            const isRefollow = user.followers.some((f) => f.id === currentUserId);
-            console.log(user)
+            const isFollowing = user.followers.some((f) => f.toString() === currentUserId.toString());
+            
             return (
               <li
                 key={user._id}
@@ -179,6 +167,7 @@ const FollowPage = () => {
                     </p>
                   </div>
                 </div>
+
                 {isFollowing ? (
                   <button
                     className="px-4 py-1.5 bg-gray-200 text-gray-700 font-medium rounded-full hover:bg-gray-300 transition-colors disabled:opacity-50"
@@ -186,14 +175,6 @@ const FollowPage = () => {
                     disabled={followLoading === user._id}
                   >
                     {followLoading === user._id ? 'Unfollowing...' : 'Following'}
-                  </button>
-                ) : isRefollow ? (
-                  <button
-                    className="px-4 py-1.5 bg-blue-500 text-white font-medium rounded-full hover:bg-blue-600 transition-colors disabled:opacity-50"
-                    onClick={() => handleFollow(user._id)}
-                    disabled={followLoading === user._id}
-                  >
-                    {followLoading === user._id ? 'Following...' : 'Refollow'}
                   </button>
                 ) : (
                   <button

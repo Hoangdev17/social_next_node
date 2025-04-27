@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { useSelector, useDispatch } from 'react-redux';
 import { loginSuccess, logout } from '@/lib/slices/authSlice';
 import { RootState } from '@/lib/store';
+import Cookies from 'js-cookie';
 
 const navigation = [
   { name: 'Home', href: '/' },
@@ -45,10 +46,14 @@ export default function Navbar() {
 
   const handleLogout = () => {
     dispatch(logout());
-    localStorage.removeItem('accessToken')
-    localStorage.removeItem('avatar')
-    localStorage.removeItem('user')
-    router.push('/login');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+    Cookies.remove('refreshToken');
+    setTimeout(() => {
+      router.push('/login');
+    }, 1000)
+    
   }
 
   const handleNavigateProfile = () => {

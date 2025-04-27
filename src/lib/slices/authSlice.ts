@@ -24,12 +24,14 @@ interface AuthState {
   user: UserProfile | null;
   token: string | null;
   isLoading: boolean;
+
 }
 
 const initialState: AuthState = {
   user: null,
   token: null,
   isLoading: true,
+
 };
 
 const authSlice = createSlice({
@@ -91,6 +93,7 @@ const authSlice = createSlice({
       }
     },
   },
+
 });
 
 export const { loginSuccess, logout, setUsername, updateUserFollowers, updateUserFollowing } = authSlice.actions;
