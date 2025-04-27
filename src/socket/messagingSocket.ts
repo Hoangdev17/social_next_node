@@ -14,7 +14,7 @@ export const privateMessage = (socket: Socket, io: SocketIOServer) => {
 
   if (userId) {
     users[userId] = socket.id;
-    console.log('User connected:', userId);
+    // console.log('User connected:', userId);
   }
 
   socket.on('private_message', async (payload: PrivateMessagePayload) => {
@@ -29,7 +29,7 @@ export const privateMessage = (socket: Socket, io: SocketIOServer) => {
         message,
       });
 
-      console.log('Saved message from', fromUserId, 'to', toUserId);
+      // console.log('Saved message from', fromUserId, 'to', toUserId);
     } catch (error) {
       console.error('Error saving message:', error);
     }
@@ -43,7 +43,7 @@ export const privateMessage = (socket: Socket, io: SocketIOServer) => {
 
   socket.on('disconnect', () => {
     if (userId) {
-      console.log('User disconnected:', userId);
+      // console.log('User disconnected:', userId);
       delete users[userId];
     }
   });

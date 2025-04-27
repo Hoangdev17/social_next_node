@@ -7,7 +7,7 @@ const socketEvents = (socket: any, io: SocketIOServer) => {
   
   // Lắng nghe sự kiện "likePost" từ client
   socket.on('likePost', async (postId: string, userId: string) => {
-    console.log(`Post ${postId} liked by user ${userId}`);
+    // console.log(`Post ${postId} liked by user ${userId}`);
 
     // Tạo req và res giả lập
     const req = {
@@ -39,7 +39,7 @@ const socketEvents = (socket: any, io: SocketIOServer) => {
 
   // Lắng nghe sự kiện "commentPost" từ client
   socket.on('commentPost', async ({ postId, comment, userId }: { postId: string, comment: string, userId: string }) => {
-    console.log(`Comment added to post ${postId}: ${comment}`);
+    // console.log(`Comment added to post ${postId}: ${comment}`);
 
     // Tạo req và res giả lập cho comment
     const req = {

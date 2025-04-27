@@ -48,6 +48,8 @@ export const login = async (req: Request, res: Response) => {
                 email: user.email,
                 avatar: user.avatar || null,
                 bio: user.bio || "",
+                followers: user.followers,
+                following: user.following
             },
         });
         return;

@@ -1,4 +1,3 @@
-// src/server.ts (hoặc app.ts nếu bạn dùng .ts)
 
 import express from 'express';
 import cors from 'cors';
@@ -50,14 +49,10 @@ const server = http.createServer(app);
 // 🧠 Gắn Socket.io vào server
 const io = new SocketIOServer(server, {
   cors: {
-    origin: "*", // Cho phép tất cả frontend connect
+    origin: "*", 
     methods: ["GET", "POST"],
   },
 });
-
-const users: {
-  [userId: string]: string;
-} = {};
 
 io.on('connection', (socket) => {
   socketEvents(socket, io);

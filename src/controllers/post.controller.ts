@@ -16,7 +16,7 @@ export const createPost = async (req: Request, res: Response) => {
              return;
         }
 
-        // Sửa lỗi kiểm tra điều kiện - chỉ cần content, image có thể không cần thiết
+       
         if (!content) {
              res.status(400).json({ message: "Content is required" });
              return;
