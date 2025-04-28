@@ -78,16 +78,16 @@ const EditProfileComponent: React.FC<EditProfileProps> = ({ initialProfile, onCl
         formData.append('posts', avatarFile); // Sửa từ 'posts' thành 'avatar'
       }
 
-      const response = await api.patch<UserProfile>('/users/editProfile', formData, {
+      const response = await api.patch<any>('/users/editProfile', formData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
         },
       });
 
       if (response.status >= 200 && response.status < 300) {
-        const result = response.data.user;
+        const result: any = response.data.user;
         // Lọc dữ liệu để khớp với interface User
-        const filteredUser: UserProfile = {
+        const filteredUser: any = {
           _id: result._id,
           username: result.username,
           email: result.email,
