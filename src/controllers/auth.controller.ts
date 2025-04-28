@@ -33,8 +33,8 @@ export const login = async (req: Request, res: Response) => {
 
         res.cookie("refreshToken", refreshToken, {
           httpOnly: true, // Prevents client-side access to the cookie
-          secure: process.env.NODE_ENV === 'production', // Ensures cookies are only sent over HTTPS in production
-          sameSite: "lax", // Allows cross-origin cookies (needed for different domains or subdomains)
+          secure: true, // Ensures cookies are only sent over HTTPS in production
+          sameSite: "none", // Allows cross-origin cookies (needed for different domains or subdomains)
           path: "/",
           maxAge: 7 * 24 * 60 * 60 * 1000, // Cookie expiry time (7 days)
           
@@ -132,8 +132,8 @@ export const register = async (req: Request, res: Response) => {
 
       res.cookie("refreshToken", newRefreshToken, {
         httpOnly: true, // Prevents client-side access to the cookie
-        secure: process.env.NODE_ENV === 'production', // Ensures cookies are only sent over HTTPS in production
-        sameSite: "lax", // Allows cross-origin cookies (needed for different domains or subdomains)
+        secure: true, // Ensures cookies are only sent over HTTPS in production
+        sameSite: "none", // Allows cross-origin cookies (needed for different domains or subdomains)
         path: "/",
         maxAge: 7 * 24 * 60 * 60 * 1000, // Cookie expiry time (7 days)
       });

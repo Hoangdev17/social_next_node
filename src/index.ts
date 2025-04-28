@@ -22,12 +22,17 @@ const PORT = process.env.PORT || 3000;
 connectDB();
 
 // Middlewares
+const allowedOrigins = [
+  'https://social-next-node.vercel.app', 
+  'http://localhost:3000'
+];
+
 app.use(cors({
   origin: (origin, callback) => {
-    if (origin) {
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, origin);
     } else {
-      callback(null, '*');
+      callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
