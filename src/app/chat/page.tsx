@@ -150,7 +150,7 @@ const ChatPage = () => {
 
     fetchUsers();
 
-    socketRef.current = io('http://localhost:5000', {
+    socketRef.current = io('https://social-next-node.onrender.com', {
       auth: { userId },
       reconnectionAttempts: 5,
     });

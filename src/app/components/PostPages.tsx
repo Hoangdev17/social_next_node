@@ -74,7 +74,7 @@ const PostPages: React.FC = () => {
 
     // Set up Socket connection
     useEffect(() => {
-        const socketConnection = io('http://localhost:5000');
+        const socketConnection = io('https://social-next-node.onrender.com');
         setSocket(socketConnection);
 
         // Listen for 'postUpdate' or a custom event sent by the backend

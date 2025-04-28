@@ -15,7 +15,7 @@ export const setAccessToken = (token: string) => {
 };
 
 export const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: 'https://social-next-node.onrender.com/api',
   withCredentials: true, 
 });
 

@@ -87,7 +87,7 @@ const FollowersList: React.FC = () => {
 
     if (!userId) return;
 
-    const socket = io('http://localhost:5000', {
+    const socket = io('https://social-next-node.onrender.com', {
       auth: { userId },
     });
 
