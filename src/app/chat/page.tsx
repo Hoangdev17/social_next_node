@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useSelector } from 'react-redux';
@@ -45,9 +45,13 @@ const ChatPage = () => {
   const userId = useSelector((state: RootState) => state.auth.user?.id);
   const router = useRouter();
 
-  if(!localStorage.getItem("accessToken")){
+  
+
+  useEffect(() => {
+    if(!localStorage.getItem("accessToken")){
     router.push("/login");
   }
+  }, []);
 
   const fetchUsers = useCallback(async () => {
     try {

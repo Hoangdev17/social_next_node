@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Box, Divider, useMediaQuery, useTheme } from '@mui/material';
 import PostPages from './components/PostPages';
 import FollowerComponent from './components/FollowerComponent';
@@ -14,9 +14,11 @@ export default function Home() {
 
   const router = useRouter();
 
-  if(!localStorage.getItem('accessToken')){
-    router.push("/login");
-  }
+  useEffect(() => {
+      if(!localStorage.getItem("accessToken")){
+      router.push("/login");
+    }
+    }, []);
 
   return (
     <Box

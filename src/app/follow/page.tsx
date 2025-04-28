@@ -38,9 +38,11 @@ const FollowPage = () => {
 
   const router = useRouter();
 
-  if(!localStorage.getItem("accessToken")){
+  useEffect(() => {
+    if(!localStorage.getItem("accessToken")){
     router.push("/login");
   }
+  }, []);
 
   const fetchUsers = async () => {
     try {
