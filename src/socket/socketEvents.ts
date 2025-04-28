@@ -39,7 +39,6 @@ const socketEvents = (socket: any, io: SocketIOServer) => {
 
   // Lắng nghe sự kiện "commentPost" từ client
   socket.on('commentPost', async ({ postId, comment, userId }: { postId: string, comment: string, userId: string }) => {
-    // console.log(`Comment added to post ${postId}: ${comment}`);
 
     // Tạo req và res giả lập cho comment
     const req = {
@@ -60,7 +59,8 @@ const socketEvents = (socket: any, io: SocketIOServer) => {
             io.emit('postCommented', {
               postId: data.post._id,
               comment: data.comment,
-              userId: req.userId
+              userId: req.userId,
+              
             });
             console.log(data);
           } else {
@@ -70,8 +70,8 @@ const socketEvents = (socket: any, io: SocketIOServer) => {
       }),
     } as Response;
 
-    // Gọi hàm commentPost với req và res giả lập
-    await commentPost(req, res);
+ 
+    // await commentPost(req, res);
   });
   
 

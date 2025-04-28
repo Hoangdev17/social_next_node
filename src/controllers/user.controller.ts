@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import mongoose from "mongoose";
 import UserSchemas from "~/models/User.schemas";
+import { uploadImageToCloudinary } from "~/utils/upload";
 
 export const getMe = async (req: Request, res: Response) => {
     try {
@@ -123,6 +124,35 @@ export const getAllUsers = async (req: Request, res: Response) => {
     try {
         const users = await UserSchemas.find().select("-password -refreshToken");
         res.status(200).json(users);
+    } catch (error) {
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+
+export const editProfile = async (req: Request, res: Response) => {
+    try {
+        const userId = req.userId;
+        const { username, bio} = req.body;
+        const imageBuffer = req.file?.buffer;
+
+        const user = await UserSchemas.findById(userId);
+
+        if (!user) {
+            res.status(404).json({ message: "User not found" });
+            return;
+        }
+
+        if (username) user.username = username;
+        if (bio) user.bio = bio;
+        if (imageBuffer) {
+            const imageUrl = await uploadImageToCloudinary(imageBuffer);
+            user.avatar = imageUrl;
+        }
+
+        await user.save();
+
+        res.status(200).json({  user });
     } catch (error) {
         res.status(500).json({ message: "Internal server error" });
     }

@@ -56,6 +56,7 @@ export const updatePost = async (req: Request, res: Response) => {
     try {
         const { postId } = req.params;
         const { title, content } = req.body;
+        
         const imageBuffer = req.file?.buffer;
 
         const userId = req.userId;
