@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, Button, Typography, Box, TextField, Avatar, Stack, CircularProgress, useMediaQuery, useTheme } from '@mui/material';
 import { api } from '@/lib/auth';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/lib/store';
 
 interface CommentModalProps {
   open: boolean;

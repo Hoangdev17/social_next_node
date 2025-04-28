@@ -36,7 +36,7 @@ interface Message {
 }
 
 const ChatPage = () => {
-  const [users, setUsers] = useState<User[]>([]); // Cập nhật lại danh sách người dùng
+  const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [message, setMessage] = useState('');
   const [chat, setChat] = useState<Message[]>([]);
@@ -111,7 +111,7 @@ const ChatPage = () => {
   useEffect(() => {
     const handleScroll = () => {
       if (chatContainerRef.current) {
-        const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
+        const { scrollTop } = chatContainerRef.current;
   
         // Khi cuộn lên tới đầu
         if (scrollTop === 0) {

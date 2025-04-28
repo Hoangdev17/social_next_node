@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/lib/store';
 import {
@@ -15,7 +15,7 @@ import {
   Box,
 } from '@mui/material';
 import { api } from '@/lib/auth';
-import { addPost, setPost } from '@/lib/slices/postSlice';
+import { addPost } from '@/lib/slices/postSlice';
 
 const AddPostComponent: React.FC = () => {
   const [content, setContent] = useState('');
