@@ -251,6 +251,9 @@ const PostPages: React.FC = () => {
                 postId={selectedPostId}
                 onSubmit={handleComment}
             />
+
+             
+
         </div>
     );
 };

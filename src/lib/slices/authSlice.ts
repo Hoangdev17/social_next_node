@@ -24,14 +24,12 @@ interface AuthState {
   user: UserProfile | null;
   token: string | null;
   isLoading: boolean;
-
 }
 
 const initialState: AuthState = {
   user: null,
   token: null,
   isLoading: true,
-
 };
 
 const authSlice = createSlice({
@@ -48,20 +46,14 @@ const authSlice = createSlice({
       state.token = null;
       state.isLoading = false;
     },
-    setUsername(state, action: PayloadAction<string>) {
+    updateUserProfile(state, action: PayloadAction<UserProfile>) {
       if (state.user) {
-        state.user.username = action.payload;
-      } else {
-        // Nếu user chưa có, tạo tạm user mới chỉ với username
-        state.user = {
-          id: '',
-          username: action.payload,
-          email: '',
-          bio: '',
-          avatar: '',
-          followers: [],
-          following: []
-        };
+          state.user = { ...state.user, ...action.payload };
+      }
+    },
+    updateAvatar(state, action: PayloadAction<string>) {
+      if (state.user) {
+        state.user.avatar = action.payload;
       }
     },
     updateUserFollowing(state, action: PayloadAction<{ userId: string; isFollowing: boolean }>) {
@@ -93,8 +85,7 @@ const authSlice = createSlice({
       }
     },
   },
-
 });
 
-export const { loginSuccess, logout, setUsername, updateUserFollowers, updateUserFollowing } = authSlice.actions;
+export const { loginSuccess, logout, updateUserProfile, updateUserFollowers, updateUserFollowing, updateAvatar } = authSlice.actions;
 export default authSlice.reducer;

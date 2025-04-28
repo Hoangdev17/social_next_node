@@ -8,6 +8,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { loginSuccess, logout } from '@/lib/slices/authSlice';
 import { RootState } from '@/lib/store';
 import Cookies from 'js-cookie';
+import { Avatar } from '@mui/material'
 
 const navigation = [
   { name: 'Home', href: '/' },
@@ -95,7 +96,8 @@ export default function Navbar() {
         <div className="hidden lg:flex lg:flex-1 lg:justify-end">
           {user ? (
             <div className="flex items-center gap-3">
-              <img
+              <Avatar
+                key={avatar}
                 src={avatar || 'https://via.placeholder.com/40'}
                 alt="Avatar"
                 className="h-10 w-10 rounded-full border-2 border-indigo-500 transition-transform duration-200 ease-in-out hover:scale-110 cursor-pointer"

@@ -32,6 +32,7 @@ interface Comment {
     userId: string;
     comment: string;
     createdAt: string;
+  
 }
 
 const postSlice = createSlice({
@@ -77,7 +78,7 @@ const postSlice = createSlice({
             }
         },
         
-        commentPost: (state, action: PayloadAction<{ postId: string; comment: string; userId: string }>) => {
+        commentPost: (state, action: PayloadAction<{ postId: string; comment: string; userId: string; }>) => {
             const { postId, comment, userId } = action.payload;
             const post = state.posts.find((p) => p._id === postId);
             if (post) {
@@ -85,6 +86,7 @@ const postSlice = createSlice({
                     userId,
                     comment,
                     createdAt: new Date().toISOString(),
+                    
                 };
                 post.comments.push(newComment);  
             }
