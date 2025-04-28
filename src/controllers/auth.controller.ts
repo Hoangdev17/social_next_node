@@ -34,7 +34,7 @@ export const login = async (req: Request, res: Response) => {
         res.cookie("refreshToken", refreshToken, {
           httpOnly: true, // Prevents client-side access to the cookie
           secure: process.env.NODE_ENV === 'production', // Ensures cookies are only sent over HTTPS in production
-          sameSite: "none", // Allows cross-origin cookies (needed for different domains or subdomains)
+          sameSite: "strict", // Allows cross-origin cookies (needed for different domains or subdomains)
           path: "/",
           maxAge: 7 * 24 * 60 * 60 * 1000, // Cookie expiry time (7 days)
           domain: ".vercel.app", // Domain for cross-subdomain support (this works with your Vercel setup)
@@ -133,7 +133,7 @@ export const register = async (req: Request, res: Response) => {
       res.cookie("refreshToken", newRefreshToken, {
         httpOnly: true, // Prevents client-side access to the cookie
         secure: process.env.NODE_ENV === 'production', // Ensures cookies are only sent over HTTPS in production
-        sameSite: "none", // Allows cross-origin cookies (needed for different domains or subdomains)
+        sameSite: "strict", // Allows cross-origin cookies (needed for different domains or subdomains)
         path: "/",
         maxAge: 7 * 24 * 60 * 60 * 1000, // Cookie expiry time (7 days)
         domain: ".vercel.app", // Domain for cross-subdomain support (this works with your Vercel setup)
